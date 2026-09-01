@@ -71,10 +71,11 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           echo "Repositories accessible to GitHub App:"
+
           gh api /installation/repositories \
             --jq '.repositories[] | "\(.full_name) | contents=\(.permissions.contents)"'
 
-      # Debug 3: Directly check private repository access
+      # Debug 3: Directly check private repository API access
       - name: Debug - Check private repository API access
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -94,13 +95,28 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh auth setup-git
+          echo "Configuring Git authentication..."
 
-      # Debug 4: Verify private module Git access
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+
+          echo "Git authentication configuration completed."
+
+          echo "Checking Git URL configuration..."
+
+          git config --global --get-regexp '^url\..*\.insteadOf$' \
+            | sed 's/x-access-token:[^@]*@/x-access-token:***@/g'
+
+      # Debug 4: Verify private repository Git access
       - name: Debug - Verify private module Git access
         run: |
+          echo "Testing Git access to private module..."
+
           git ls-remote \
             https://github.com/Dhruv9066/terraform-aws-s3-bucket-website.git
+
+          echo "Private module Git access successful."
 
       # Terraform Init
       - name: Terraform Init
