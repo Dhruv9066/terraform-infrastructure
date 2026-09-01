@@ -75,7 +75,7 @@ jobs:
             --jq '.repositories[] | "\(.full_name) | contents=\(.permissions.contents)"'
 
       # Debug 3: Directly check private repository access
-      - name: Debug - Check private repository access
+      - name: Debug - Check private repository API access
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
@@ -89,16 +89,14 @@ jobs:
               permissions: .permissions
             }'
 
-      # Configure Git to use GitHub App token
+      # Configure Git using GitHub App installation token
       - name: Configure Git authentication
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          git config --global \
-            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
-            "https://github.com/"
+          gh auth setup-git
 
-      # Debug 4: Verify Git authentication
+      # Debug 4: Verify private module Git access
       - name: Debug - Verify private module Git access
         run: |
           git ls-remote \
