@@ -146,6 +146,12 @@ jobs:
 
           echo "Private module Git access successful."
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: "arn:aws:iam::667481407924:role/Github_terraform_infrastructure"
+          aws-region: "us-east-1"
+
       # ---------------------------------------------------------
       # Terraform Init
       # ---------------------------------------------------------
