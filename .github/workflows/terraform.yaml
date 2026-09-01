@@ -43,6 +43,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Verify AWS identity 
+        run: aws sts get-caller-identity
+        
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
