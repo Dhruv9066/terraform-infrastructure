@@ -39,15 +39,21 @@ jobs:
 
     steps:
 
+      # ---------------------------------------------------------
       # Checkout terraform-infrastructure
+      # ---------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v5
 
+      # ---------------------------------------------------------
       # Setup Terraform
+      # ---------------------------------------------------------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # ---------------------------------------------------------
       # Create GitHub App installation token
+      # ---------------------------------------------------------
       - name: Create GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -58,14 +64,17 @@ jobs:
           repositories: terraform-aws-s3-bucket-website
           permission-contents: read
 
+      # ---------------------------------------------------------
       # Debug 1: Show installation ID
-      # Safe to print - this is NOT the access token.
+      # ---------------------------------------------------------
       - name: Debug - GitHub App installation ID
         run: |
           echo "GitHub App installation ID:"
           echo "${{ steps.app-token.outputs.installation-id }}"
 
-      # Debug 2: Check repositories available to the installation token
+      # ---------------------------------------------------------
+      # Debug 2: Check repositories accessible to App
+      # ---------------------------------------------------------
       - name: Debug - App installation repositories
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -73,9 +82,11 @@ jobs:
           echo "Repositories accessible to GitHub App:"
 
           gh api /installation/repositories \
-            --jq '.repositories[] | "\(.full_name) | contents=\(.permissions.contents)"'
+            --jq '.repositories[] | "\(.full_name)"'
 
-      # Debug 3: Directly check private repository API access
+      # ---------------------------------------------------------
+      # Debug 3: Check private repository API access
+      # ---------------------------------------------------------
       - name: Debug - Check private repository API access
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -86,52 +97,61 @@ jobs:
             repos/Dhruv9066/terraform-aws-s3-bucket-website \
             --jq '{
               name: .full_name,
-              private: .private,
-              permissions: .permissions
+              private: .private
             }'
 
-      # Configure Git using GitHub App installation token
-      - name: Configure Git authentication
+      # ---------------------------------------------------------
+      # Debug 4: Check repository Contents API
+      # This directly tests Contents read access.
+      # ---------------------------------------------------------
+      - name: Debug - Check repository contents access
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          echo "Configuring Git authentication..."
+          echo "Checking repository contents access..."
 
-          git config --global \
-            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
-            "https://github.com/"
+          gh api \
+            repos/Dhruv9066/terraform-aws-s3-bucket-website/contents \
+            --jq '.[].name'
 
-          echo "Git authentication configuration completed."
-
-          echo "Checking Git URL configuration..."
-
-          git config --global --get-regexp '^url\..*\.insteadOf$' \
-            | sed 's/x-access-token:[^@]*@/x-access-token:***@/g'
-
-      # Debug 4: Verify private repository Git access
+      # ---------------------------------------------------------
+      # Debug 5: Test Git access directly with App token
+      # ---------------------------------------------------------
       - name: Debug - Verify private module Git access
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           echo "Testing Git access to private module..."
 
-          git ls-remote \
+          git \
+            -c "http.https://github.com/.extraheader=Authorization: Bearer ${GH_TOKEN}" \
+            ls-remote \
             https://github.com/Dhruv9066/terraform-aws-s3-bucket-website.git
 
           echo "Private module Git access successful."
 
+      # ---------------------------------------------------------
       # Terraform Init
+      # ---------------------------------------------------------
       - name: Terraform Init
         run: terraform init
 
+      # ---------------------------------------------------------
       # Terraform Validate
+      # ---------------------------------------------------------
       - name: Terraform Validate
         run: terraform validate
 
+      # ---------------------------------------------------------
       # Terraform Plan
+      # ---------------------------------------------------------
       - name: Terraform Plan
         if: ${{ inputs.action == 'plan' }}
         run: terraform plan -var-file=${{ inputs.environment }}.tfvars
 
+      # ---------------------------------------------------------
       # Terraform Apply
+      # ---------------------------------------------------------
       - name: Terraform Apply
         if: ${{ inputs.action == 'apply' }}
         run: terraform apply -auto-approve -var-file=${{ inputs.environment }}.tfvars
