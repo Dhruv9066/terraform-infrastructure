@@ -43,6 +43,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: Dhruv9066
+          repositories: terraform-aws-s3-bucket
+
+      - name: Configure Git
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
