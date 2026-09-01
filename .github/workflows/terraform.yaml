@@ -55,7 +55,7 @@ jobs:
           client-id: ${{ vars.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: Dhruv9066
-          repositories: terraform-aws-s3-bucket
+          repositories: terraform-aws-s3-bucket-website
           permission-contents: read
 
       # Configure Git to authenticate with the GitHub App token
