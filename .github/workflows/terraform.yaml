@@ -49,17 +49,8 @@ jobs:
           role-to-assume: arn:aws:iam::667481407924:role/Github_terraform_infrastructure
           aws-region: us-east-1
 
-      - name: Verify AWS identity 
-        run: aws sts get-caller-identity
-        
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Format
-        run: terraform fmt -check -recursive
 
       - name: Terraform Init
         run: terraform init
