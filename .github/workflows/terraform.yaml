@@ -68,7 +68,7 @@ jobs:
       # Test access to the private Terraform module
       - name: Verify private module access
         run: |
-          git ls-remote https://github.com/Dhruv9066/terraform-aws-s3-bucket.git
+          git ls-remote https://github.com/Dhruv9066/terraform-aws-s3-bucket-website.git
 
       # Initialize Terraform and download private modules
       - name: Terraform Init
