@@ -26,7 +26,6 @@ permissions:
   contents: read
 
 jobs:
-
   terraform:
     name: Terraform ${{ inputs.action }} - ${{ inputs.environment }}
     runs-on: ubuntu-latest
@@ -43,6 +42,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Create GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -50,22 +52,18 @@ jobs:
           client-id: ${{ vars.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: Dhruv9066
-          repositories: terraform-aws-s3-bucket-website
+          repositories: terraform-aws-s3-bucket
+          permission-contents: read
 
       - name: Configure Git authentication
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+          gh auth setup-git
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6.2.3
-        with:
-          role-to-assume: arn:aws:iam::667481407924:role/Github_terraform_infrastructure
-          aws-region: us-east-1
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Verify private module access
+        run: |
+          git ls-remote https://github.com/Dhruv9066/terraform-aws-s3-bucket.git
 
       - name: Terraform Init
         run: terraform init
@@ -74,6 +72,7 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
+        if: ${{ inputs.action == 'plan' }}
         run: terraform plan -var-file=${{ inputs.environment }}.tfvars
 
       - name: Terraform Apply
