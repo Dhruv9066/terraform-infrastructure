@@ -39,11 +39,11 @@ jobs:
 
     steps:
 
-      # Checkout Terraform repository
+      # Checkout terraform-infrastructure
       - name: Checkout
         uses: actions/checkout@v5
 
-      # Install Terraform
+      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
@@ -58,37 +58,26 @@ jobs:
           repositories: terraform-aws-s3-bucket-website
           permission-contents: read
 
-      # Check that the GitHub App token was created
-      - name: Verify GitHub App token
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "GitHub App token was not created"
-            exit 1
-          fi
-
-          echo "GitHub App token was created successfully"
-
-      # Configure Git to authenticate using the GitHub App token
+      # Configure Git to use GitHub App token
       - name: Configure Git authentication
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
 
-      # Verify access to the private module repository
+      # Verify private module access
       - name: Verify private module access
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          git ls-remote https://x-access-token:${GH_TOKEN}@github.com/Dhruv9066/terraform-aws-s3-bucket-website.git
+          git ls-remote \
+            https://x-access-token:${GH_TOKEN}@github.com/Dhruv9066/terraform-aws-s3-bucket-website.git
 
-      # Initialize Terraform and download private modules
+      # Terraform Init
       - name: Terraform Init
         run: terraform init
 
-      # Validate Terraform configuration
+      # Terraform Validate
       - name: Terraform Validate
         run: terraform validate
 
