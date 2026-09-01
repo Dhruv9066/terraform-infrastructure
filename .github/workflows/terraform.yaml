@@ -41,7 +41,7 @@ jobs:
 
       # ---------------------------------------------------------
       # Checkout terraform-infrastructure
-      # Do NOT persist the default GITHUB_TOKEN credentials.
+      # Do not persist the default GITHUB_TOKEN credentials.
       # ---------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v5
@@ -68,7 +68,7 @@ jobs:
           permission-contents: read
 
       # ---------------------------------------------------------
-      # Debug 1: Show installation ID
+      # Debug: Show installation ID
       # ---------------------------------------------------------
       - name: Debug - GitHub App installation ID
         run: |
@@ -76,7 +76,7 @@ jobs:
           echo "${{ steps.app-token.outputs.installation-id }}"
 
       # ---------------------------------------------------------
-      # Debug 2: Check repositories accessible to App
+      # Debug: Verify repository is accessible
       # ---------------------------------------------------------
       - name: Debug - App installation repositories
         env:
@@ -88,7 +88,7 @@ jobs:
             --jq '.repositories[] | "\(.full_name)"'
 
       # ---------------------------------------------------------
-      # Debug 3: Check private repository API access
+      # Debug: Verify private repository API access
       # ---------------------------------------------------------
       - name: Debug - Check private repository API access
         env:
@@ -104,7 +104,7 @@ jobs:
             }'
 
       # ---------------------------------------------------------
-      # Debug 4: Check Contents read access
+      # Debug: Verify Contents read permission
       # ---------------------------------------------------------
       - name: Debug - Check repository contents access
         env:
@@ -117,17 +117,31 @@ jobs:
             --jq '.[].name'
 
       # ---------------------------------------------------------
-      # Debug 5: Test Git access with App installation token
+      # Configure Git authentication for private module
+      #
+      # GitHub App installation tokens are used as the HTTPS
+      # password with x-access-token as the username.
       # ---------------------------------------------------------
-      - name: Debug - Verify private module Git access
+      - name: Configure Git authentication
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          echo "Configuring Git authentication..."
+
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+
+          echo "Git authentication configured."
+
+      # ---------------------------------------------------------
+      # Test private module Git access
+      # ---------------------------------------------------------
+      - name: Debug - Verify private module Git access
+        run: |
           echo "Testing Git access to private module..."
 
-          git \
-            -c "http.https://github.com/.extraheader=Authorization: Bearer ${GH_TOKEN}" \
-            ls-remote \
+          git ls-remote \
             https://github.com/Dhruv9066/terraform-aws-s3-bucket-website.git
 
           echo "Private module Git access successful."
@@ -136,10 +150,7 @@ jobs:
       # Terraform Init
       # ---------------------------------------------------------
       - name: Terraform Init
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          terraform init
+        run: terraform init
 
       # ---------------------------------------------------------
       # Terraform Validate
