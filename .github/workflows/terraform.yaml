@@ -41,9 +41,12 @@ jobs:
 
       # ---------------------------------------------------------
       # Checkout terraform-infrastructure
+      # Do NOT persist the default GITHUB_TOKEN credentials.
       # ---------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       # ---------------------------------------------------------
       # Setup Terraform
@@ -101,8 +104,7 @@ jobs:
             }'
 
       # ---------------------------------------------------------
-      # Debug 4: Check repository Contents API
-      # This directly tests Contents read access.
+      # Debug 4: Check Contents read access
       # ---------------------------------------------------------
       - name: Debug - Check repository contents access
         env:
@@ -115,7 +117,7 @@ jobs:
             --jq '.[].name'
 
       # ---------------------------------------------------------
-      # Debug 5: Test Git access directly with App token
+      # Debug 5: Test Git access with App installation token
       # ---------------------------------------------------------
       - name: Debug - Verify private module Git access
         env:
@@ -134,7 +136,10 @@ jobs:
       # Terraform Init
       # ---------------------------------------------------------
       - name: Terraform Init
-        run: terraform init
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          terraform init
 
       # ---------------------------------------------------------
       # Terraform Validate
