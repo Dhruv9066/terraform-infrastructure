@@ -50,7 +50,7 @@ jobs:
           client-id: ${{ vars.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: Dhruv9066
-          repositories: terraform-aws-s3-bucket
+          repositories: terraform-aws-s3-bucket-website
 
       - name: Configure Git
         env:
