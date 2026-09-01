@@ -39,12 +39,15 @@ jobs:
 
     steps:
 
+      # Checkout Terraform repository
       - name: Checkout
         uses: actions/checkout@v5
 
+      # Install Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # Create GitHub App installation token
       - name: Create GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -55,26 +58,32 @@ jobs:
           repositories: terraform-aws-s3-bucket
           permission-contents: read
 
+      # Configure Git to authenticate with the GitHub App token
       - name: Configure Git authentication
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh auth setup-git
+          git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
 
+      # Test access to the private Terraform module
       - name: Verify private module access
         run: |
           git ls-remote https://github.com/Dhruv9066/terraform-aws-s3-bucket.git
 
+      # Initialize Terraform and download private modules
       - name: Terraform Init
         run: terraform init
 
+      # Validate Terraform configuration
       - name: Terraform Validate
         run: terraform validate
 
+      # Terraform Plan
       - name: Terraform Plan
         if: ${{ inputs.action == 'plan' }}
         run: terraform plan -var-file=${{ inputs.environment }}.tfvars
 
+      # Terraform Apply
       - name: Terraform Apply
         if: ${{ inputs.action == 'apply' }}
         run: terraform apply -auto-approve -var-file=${{ inputs.environment }}.tfvars
